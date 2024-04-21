@@ -10,11 +10,13 @@ class AnimatedHoverMenu extends StatefulWidget {
   ///Header properties
   final List<Menu> headerTiles;
   final BoxDecoration? headerBoxDecoration;
+  final BoxDecoration? headerBoxDecorationSelected;
   final Color? headerTextColor;
+  final Color? headerTextColorSelected;
   final double? headerTextSize;
 
   ///Menu properties
-  final List<SubMenu> menuTiles;
+  final List<List<SubMenu>> menuTiles;
   final BoxDecoration? menuBoxDecoration;
   final Color? menuTextColor;
   final double? menuTextSize;
@@ -28,6 +30,9 @@ class AnimatedHoverMenu extends StatefulWidget {
   ///Background gradient
   final Widget? backgroundWidget;
 
+  ///Current route
+  final String? selectedRoute;
+
   AnimatedHoverMenu({
     Key? key,
     required this.headerTiles,
@@ -35,21 +40,24 @@ class AnimatedHoverMenu extends StatefulWidget {
     required this.headerPosition,
     this.backgroundWidget,
     this.headerBoxDecoration,
+    this.headerBoxDecorationSelected,
     this.headerTextColor,
+    this.headerTextColorSelected,
     this.headerTextSize,
     this.menuBoxDecoration,
     this.menuTextColor,
     this.menuTextSize,
     this.animationType,
+    this.selectedRoute,
   }) : super(key: key);
 
   @override
   _AnimatedHoverMenuState createState() => _AnimatedHoverMenuState();
 }
 
-class _AnimatedHoverMenuState extends State<AnimatedHoverMenu>
-    with SingleTickerProviderStateMixin {
+class _AnimatedHoverMenuState extends State<AnimatedHoverMenu> with SingleTickerProviderStateMixin {
   bool hovered = false;
+  ValueNotifier<int?> selectedSubMenu = ValueNotifier(null);
 
   @override
   Widget build(BuildContext context) {
@@ -68,91 +76,63 @@ class _AnimatedHoverMenuState extends State<AnimatedHoverMenu>
           });
         },
         child: Stack(
-          alignment: Alignment.topRight,
+          alignment: Alignment.center,
           children: [
             SizedBox(
               height: MediaQuery.of(context).size.height,
               width: MediaQuery.of(context).size.width,
               child: widget.backgroundWidget ??
                   Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xfffff8f9),
-                          Color(0xfffef7f8),
-                          Color(0xffecf0fa),
-                        ],
-                      ),
-                    ),
+                    color: Colors.white,
                   ),
             ),
-            _defineHeaderPosition(widget.headerPosition),
+            _headerMenuWidget(widget.selectedRoute),
           ],
         ),
       ),
     );
   }
 
-  ///Here we are bifurcating animation type and according to that we have set it's alignment
-  Widget _defineHeaderPosition(HeaderPosition headerPosition) {
-    if (headerPosition == HeaderPosition.topLeft) {
-      return _headerMenuWidget();
-    } else if (headerPosition == HeaderPosition.bottomLeft) {
-      return Container(
-        alignment: Alignment.bottomLeft,
-        child: _headerMenuWidget(),
-      );
-    } else if (headerPosition == HeaderPosition.topRight) {
-      return _headerMenuWidget();
-    } else if (headerPosition == HeaderPosition.bottomRight) {
-      return Container(
-        alignment: Alignment.bottomRight,
-        child: _headerMenuWidget(),
-      );
-    } else {
-      return const Offstage();
-    }
-  }
-
   ///It will return header menu list
-  Widget _headerMenuWidget() {
-    return SizedBox(
+  Widget _headerMenuWidget(String? selectedRoute) {
+    return Container(
+      alignment: Alignment.center,
       height: 55,
       child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: widget.headerTiles.length,
-          shrinkWrap:
-              widget.headerPosition == HeaderPosition.topLeft ? false : true,
-          itemBuilder: (context, index) {
-            return Container(
-              margin: const EdgeInsets.all(8.0),
-              child: MenuTilesWidget(
-                menuTiles: widget.menuTiles,
-                headerTiles: widget.headerTiles,
-                index: index,
-                hovered: hovered,
-                menuBoxDecoration: widget.menuBoxDecoration ??
-                    const BoxDecoration(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(7.0),
-                        ),
-                        color: Colors.black38),
-                menuTextColor: widget.menuTextColor ?? Colors.white,
-                menuTextSize: widget.menuTextSize ?? 16.0,
-                headerPosition: widget.headerPosition,
-                animationType:
-                    widget.animationType ?? AnimationType.leftToRight,
+        scrollDirection: Axis.horizontal,
+        itemCount: widget.headerTiles.length,
+        shrinkWrap: widget.headerPosition == HeaderPosition.topLeft ? false : true,
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.all(8.0),
+            child: MenuTilesWidget(
+              menuTiles: widget.menuTiles[index],
+              headerTiles: widget.headerTiles,
+              index: index,
+              hovered: hovered,
+              menuBoxDecoration: widget.menuBoxDecoration ??
+                  const BoxDecoration(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(7.0),
+                      ),
+                      color: Colors.black38),
+              menuTextColor: widget.menuTextColor ?? Colors.white,
+              menuTextSize: widget.menuTextSize ?? 16.0,
+              headerPosition: widget.headerPosition,
+              animationType: widget.animationType ?? AnimationType.leftToRight,
+              child: InkWell(
+                onTap: widget.headerTiles[index].onTap,
                 child: Container(
-                  width: 190,
                   margin: const EdgeInsets.only(left: 10.0),
-                  decoration: widget.headerBoxDecoration ??
-                      const BoxDecoration(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(5.0),
-                          ),
-                          color: Colors.black),
+                  padding: EdgeInsets.symmetric(vertical: 5, horizontal: 20),
+                  decoration: (widget.headerTiles[index].route == selectedRoute)
+                      ? widget.headerBoxDecorationSelected
+                      : widget.headerBoxDecoration ??
+                          const BoxDecoration(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(50.0),
+                              ),
+                              color: Colors.black),
                   alignment: Alignment.center,
                   child: Text(
                     widget.headerTiles[index].name ?? '',
@@ -160,12 +140,16 @@ class _AnimatedHoverMenuState extends State<AnimatedHoverMenu>
                     style: TextStyle(
                         fontSize: widget.headerTextSize ?? 15.0,
                         fontWeight: FontWeight.w500,
-                        color: widget.headerTextColor ?? Colors.white),
+                        color: (widget.headerTiles[index].route == selectedRoute)
+                            ? widget.headerTextColorSelected
+                            : widget.headerTextColor ?? Colors.white),
                   ),
                 ),
               ),
-            );
-          }),
+            ),
+          );
+        },
+      ),
     );
   }
 }

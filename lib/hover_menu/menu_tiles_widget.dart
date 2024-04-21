@@ -97,14 +97,7 @@ class _MenuTilesWidgetState extends State<MenuTilesWidget>
     return OverlayEntry(builder: (BuildContext overlayContext) {
       final offset = _getPosition();
       return Positioned(
-        top: (widget.headerPosition == HeaderPosition.bottomLeft ||
-                widget.headerPosition == HeaderPosition.bottomRight)
-            ? null
-            : 50,
-        bottom: (widget.headerPosition == HeaderPosition.bottomLeft ||
-                widget.headerPosition == HeaderPosition.bottomRight)
-            ? 50
-            : null,
+        top: 70,
         left: offset.dx + 5,
         child: ChangeNotifierProvider.value(
           value: ScrollEventNotifier(false, false),
@@ -124,12 +117,17 @@ class _MenuTilesWidgetState extends State<MenuTilesWidget>
                       setStateForOverlay(() {});
                     }
                   },
-                  child: SizedBox(
-                    height: 400,
+                  // child: PopupMenuButton<dynamic>(
+                  //   enabled: _menuHover[widget.index],
+                  //   itemBuilder: (context) => [],
+                  // ),
+                  child: Container(
+                    constraints: BoxConstraints(minHeight: 400),
                     child: SingleChildScrollView(
                       controller: controller,
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: _buildListItems(),
                       ),
                     ),
@@ -180,28 +178,25 @@ class _MenuTilesWidgetState extends State<MenuTilesWidget>
                   },
                   child: InkWell(
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text("You Tapped On ${widget.menuTiles[i]}"),
-                          duration: const Duration(milliseconds: 500)));
+                      entry?.remove();
+                      widget.menuTiles[i].onTap?.call();
                     },
-                    child: SizedBox(
-                      width: 200,
-                      child: Container(
-                        alignment: Alignment.center,
-                        decoration: widget.menuBoxDecoration,
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 2.0, horizontal: 10.0),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            widget.menuTiles[i].name ?? '',
-                            textAlign: TextAlign.left,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: widget.menuTextSize,
-                                fontWeight: FontWeight.w500,
-                                color: widget.menuTextColor),
-                          ),
+                    child: Container(
+                      constraints: BoxConstraints(minWidth: 200),
+                      alignment: Alignment.center,
+                      decoration: widget.menuBoxDecoration,
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 2.0, horizontal: 10.0),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          widget.menuTiles[i].name ?? '',
+                          textAlign: TextAlign.left,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: widget.menuTextSize,
+                              fontWeight: FontWeight.w500,
+                              color: widget.menuTextColor),
                         ),
                       ),
                     ),
@@ -217,7 +212,7 @@ class _MenuTilesWidgetState extends State<MenuTilesWidget>
 
   ///Add overlay using it's entry
   _addOverlay(OverlayEntry entry) {
-    Overlay.of(context)?.insert(entry);
+    Overlay.of(context).insert(entry);
   }
 
   ///According to animation type returning different type of Tile with animation
